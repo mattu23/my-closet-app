@@ -43,4 +43,12 @@ class User extends Authenticatable implements MustVerifyEmail
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+    /**
+     * このユーザーが所有する洋服を取得
+     */
+    public function clothes()
+    {
+        return $this->hasMany(Clothes::class);
+    }
 }

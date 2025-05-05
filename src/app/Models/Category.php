@@ -64,6 +64,14 @@ class Category extends Model
     }
 
     /**
+     * このカテゴリーに属する洋服を取得
+     */
+    public function clothes()
+    {
+        return $this->hasMany(Clothes::class);
+    }
+
+    /**
      * モデルの初期化処理
      */
     protected static function boot()
