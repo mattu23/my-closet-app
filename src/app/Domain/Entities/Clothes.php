@@ -10,10 +10,11 @@ class Clothes
 {
     private int $id;
     private string $name;
-    private string $description;
+    private ?string $description;
     private ?string $imagePath;
     private int $categoryId;
     private int $userId;
+    private ?string $createdAt;
     private ?string $deletedAt;
     
     // 値オブジェクト
@@ -24,13 +25,14 @@ class Clothes
     public function __construct(
         int $id,
         string $name,
-        string $description,
+        ?string $description,
         ?string $imagePath,
         int $categoryId,
         int $userId,
         ?Size $size = null,
         ?Color $color = null,
         ?Brand $brand = null,
+        ?string $createdAt = null,
         ?string $deletedAt = null
     ) {
         $this->id = $id;
@@ -42,6 +44,7 @@ class Clothes
         $this->size = $size;
         $this->color = $color;
         $this->brand = $brand;
+        $this->createdAt = $createdAt;
         $this->deletedAt = $deletedAt;
     }
 
@@ -55,7 +58,7 @@ class Clothes
         return $this->name;
     }
 
-    public function getDescription(): string
+    public function getDescription(): ?string
     {
         return $this->description;
     }
@@ -88,6 +91,11 @@ class Clothes
     public function getBrand(): ?Brand
     {
         return $this->brand;
+    }
+
+    public function getCreatedAt(): ?string
+    {
+        return $this->createdAt;
     }
 
     public function getDeletedAt(): ?string

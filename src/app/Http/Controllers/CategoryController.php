@@ -21,9 +21,7 @@ class CategoryController extends Controller
     public function index(): View
     {
         $categories = $this->categoryService->getRootCategories();
-        return view('categories.index', [
-            'categories' => $categories
-        ]);
+        return view('categories.index', ['categories' => $categories]);
     }
 
     /**
@@ -31,10 +29,8 @@ class CategoryController extends Controller
      */
     public function create(): View
     {
-        $categories = $this->categoryService->getRootCategories();
-        return view('categories.create', [
-            'categories' => $categories
-        ]);
+        $formData = $this->categoryService->getCreateFormData();
+        return view('categories.create', $formData);
     }
 
     /**
@@ -48,7 +44,7 @@ class CategoryController extends Controller
             'parent_id' => 'nullable|integer|exists:categories,id'
         ]);
 
-        $category = $this->categoryService->createCategory($validated);
+        $this->categoryService->createCategory($validated);
 
         return redirect()->route('categories.index')
             ->with('success', 'カテゴリーを作成しました。');
@@ -59,13 +55,8 @@ class CategoryController extends Controller
      */
     public function show(int $id): View
     {
-        $category = $this->categoryService->getCategory($id);
-        if (!$category) {
-            abort(404);
-        }
-        return view('categories.show', [
-            'category' => $category
-        ]);
+        $categoryData = $this->categoryService->getCategoryData($id);
+        return view('categories.show', $categoryData);
     }
 
     /**
@@ -73,15 +64,8 @@ class CategoryController extends Controller
      */
     public function edit(int $id): View
     {
-        $category = $this->categoryService->getCategory($id);
-        if (!$category) {
-            abort(404);
-        }
-        $categories = $this->categoryService->getRootCategories();
-        return view('categories.edit', [
-            'category' => $category,
-            'categories' => $categories
-        ]);
+        $editData = $this->categoryService->getEditFormData($id);
+        return view('categories.edit', $editData);
     }
 
     /**
@@ -95,10 +79,7 @@ class CategoryController extends Controller
             'parent_id' => 'nullable|integer|exists:categories,id'
         ]);
 
-        $category = $this->categoryService->updateCategory($id, $validated);
-        if (!$category) {
-            abort(404);
-        }
+        $this->categoryService->updateCategory($id, $validated);
 
         return redirect()->route('categories.index')
             ->with('success', 'カテゴリーを更新しました。');
@@ -117,11 +98,9 @@ class CategoryController extends Controller
     /**
      * 子カテゴリーを取得
      */
-    public function children(int $id)
+    public function children(int $id): View
     {
-        $categories = $this->categoryService->getChildCategories($id);
-        return view('categories.children', [
-            'categories' => $categories
-        ]);
+        $childrenData = $this->categoryService->getChildrenData($id);
+        return view('categories.children', $childrenData);
     }
 } 

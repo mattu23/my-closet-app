@@ -8,6 +8,9 @@ use App\Domain\Repositories\CategoryRepositoryInterface;
 use App\Domain\ValueObjects\Size;
 use App\Domain\ValueObjects\Color;
 use App\Domain\ValueObjects\Brand;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Http\UploadedFile;
 
 class ClothesService
 {
@@ -20,6 +23,51 @@ class ClothesService
     ) {
         $this->clothesRepository = $clothesRepository;
         $this->categoryRepository = $categoryRepository;
+    }
+
+    /**
+     * フィルタリングされた洋服一覧を取得
+     */
+    public function getFilteredClothes(array $filters): array
+    {
+        $userId = Auth::id();
+        $clothes = $this->clothesRepository->findByUserId($userId);
+
+        if (isset($filters['size'])) {
+            try {
+                $clothes = $this->getClothesBySize($userId, $filters['size']);
+            } catch (\InvalidArgumentException $e) {
+                // 無効なサイズの場合は無視
+            }
+        }
+
+        if (isset($filters['brand'])) {
+            $clothes = $this->getClothesByBrand($userId, $filters['brand']);
+        }
+
+        if (isset($filters['color'])) {
+            if ($filters['color'] === 'dark') {
+                $clothes = $this->getDarkColoredClothes($userId);
+            } elseif ($filters['color'] === 'bright') {
+                $clothes = $this->getBrightColoredClothes($userId);
+            }
+        }
+
+        return [
+            'clothes' => $clothes,
+            'availableSizes' => Size::getAvailableSizes()
+        ];
+    }
+
+    /**
+     * 作成フォーム用のデータを取得
+     */
+    public function getCreateFormData(): array
+    {
+        return [
+            'categories' => $this->categoryRepository->getRootCategories(),
+            'availableSizes' => Size::getAvailableSizes()
+        ];
     }
 
     /**
@@ -88,60 +136,63 @@ class ClothesService
      */
     public function updateClothes(
         int $id,
-        string $name,
-        string $description,
-        ?string $imagePath,
-        int $categoryId,
-        ?string $size = null,
-        ?array $colorData = null,
-        ?array $brandData = null
+        array $validated,
+        ?UploadedFile $image = null
     ): ?Clothes {
+        $userId = Auth::id();
         $clothes = $this->clothesRepository->findById($id);
-        if (!$clothes) {
-            return null;
+        
+        if (!$clothes || $clothes->getUserId() !== $userId) {
+            throw new \Exception('洋服が見つかりません。');
         }
 
-        $clothes->changeName($name);
-        $clothes->changeDescription($description);
-        $clothes->changeImage($imagePath);
-        $clothes->changeCategory($categoryId);
-        
-        // 値オブジェクトの更新
-        if ($size !== null) {
+        $imagePath = $clothes->getImagePath();
+        if ($image) {
+            if ($imagePath) {
+                Storage::disk('public')->delete($imagePath);
+            }
+            $imagePath = $image->store('clothes', 'public');
+        }
+
+        // 値オブジェクトの作成
+        $sizeObj = null;
+        if (isset($validated['size'])) {
             try {
-                $clothes->changeSize(new Size($size));
+                $sizeObj = new Size($validated['size']);
             } catch (\InvalidArgumentException $e) {
-                $clothes->changeSize(null);
+                // サイズが無効な場合は無視
             }
         }
         
-        if ($colorData !== null) {
-            if (isset($colorData['name']) && isset($colorData['hex_code'])) {
-                try {
-                    $clothes->changeColor(new Color($colorData['name'], $colorData['hex_code']));
-                } catch (\InvalidArgumentException $e) {
-                    $clothes->changeColor(null);
-                }
-            } else {
-                $clothes->changeColor(null);
+        $colorObj = null;
+        if (isset($validated['color_name']) && isset($validated['color_code'])) {
+            try {
+                $colorObj = new Color($validated['color_name'], $validated['color_code']);
+            } catch (\InvalidArgumentException $e) {
+                // 色が無効な場合は無視
             }
         }
         
-        if ($brandData !== null) {
-            if (isset($brandData['name'])) {
-                try {
-                    $clothes->changeBrand(new Brand(
-                        $brandData['name'],
-                        $brandData['description'] ?? null,
-                        $brandData['country'] ?? null
-                    ));
-                } catch (\InvalidArgumentException $e) {
-                    $clothes->changeBrand(null);
-                }
-            } else {
-                $clothes->changeBrand(null);
+        $brandObj = null;
+        if (isset($validated['brand_name'])) {
+            try {
+                $brandObj = new Brand(
+                    $validated['brand_name'],
+                    $validated['brand_description'] ?? null,
+                    $validated['brand_country'] ?? null
+                );
+            } catch (\InvalidArgumentException $e) {
+                // ブランドが無効な場合は無視
             }
         }
+
+        $clothes->changeName($validated['name']);
+        $clothes->changeDescription($validated['description']);
+        $clothes->changeImage($imagePath);
+        $clothes->changeCategory($validated['category_id']);
+        $clothes->changeSize($sizeObj);
+        $clothes->changeColor($colorObj);
+        $clothes->changeBrand($brandObj);
 
         $this->clothesRepository->save($clothes);
         return $clothes;
@@ -240,5 +291,67 @@ class ClothesService
         return array_filter($allClothes, function (Clothes $clothes) {
             return $clothes->hasColor() && $clothes->getColor()->isBright();
         });
+    }
+
+    /**
+     * 洋服詳細を取得
+     */
+    public function getClothesDetail(int $id): array
+    {
+        $userId = Auth::id();
+        $clothes = $this->clothesRepository->findByUserId($userId);
+        
+        $targetClothes = null;
+        foreach ($clothes as $item) {
+            if ($item->getId() == $id) {
+                $targetClothes = $item;
+                break;
+            }
+        }
+
+        if (!$targetClothes) {
+            throw new \Exception('洋服が見つかりません。');
+        }
+
+        return ['clothes' => $targetClothes];
+    }
+
+    /**
+     * 編集フォーム用のデータを取得
+     */
+    public function getEditFormData(int $id): array
+    {
+        $userId = Auth::id();
+        $clothes = $this->clothesRepository->findByUserId($userId);
+        
+        $targetClothes = null;
+        foreach ($clothes as $item) {
+            if ($item->getId() == $id) {
+                $targetClothes = $item;
+                break;
+            }
+        }
+
+        if (!$targetClothes) {
+            throw new \Exception('洋服が見つかりません。');
+        }
+
+        return [
+            'clothes' => $targetClothes,
+            'categories' => $this->categoryRepository->getRootCategories(),
+            'availableSizes' => Size::getAvailableSizes()
+        ];
+    }
+
+    /**
+     * ダッシュボードデータを取得
+     */
+    public function getDashboardData(): array
+    {
+        $userId = Auth::id();
+        return [
+            'clothes' => collect($this->clothesRepository->findByUserId($userId)),
+            'categories' => $this->categoryRepository->getRootCategories()
+        ];
     }
 } 

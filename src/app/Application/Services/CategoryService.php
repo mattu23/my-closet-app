@@ -6,6 +6,7 @@ use App\Application\DTOs\CategoryDTO;
 use App\Domain\Entities\Category;
 use App\Domain\Repositories\CategoryRepositoryInterface;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 
 class CategoryService
 {
@@ -17,8 +18,14 @@ class CategoryService
     /**
      * カテゴリーを作成
      */
-    public function createCategory(CategoryDTO $dto): CategoryDTO
+    public function createCategory(array $validated): CategoryDTO
     {
+        $dto = new CategoryDTO(
+            $validated['name'],
+            $validated['description'] ?? null,
+            $validated['parent_id'] ?? null
+        );
+
         $category = $this->categoryRepository->create($dto->toEntity());
         return CategoryDTO::fromEntity($category);
     }
@@ -26,12 +33,18 @@ class CategoryService
     /**
      * カテゴリーを更新
      */
-    public function updateCategory(int $id, CategoryDTO $dto): ?CategoryDTO
+    public function updateCategory(int $id, array $validated): ?CategoryDTO
     {
         $category = $this->categoryRepository->findById($id);
         if (!$category) {
             return null;
         }
+
+        $dto = new CategoryDTO(
+            $validated['name'],
+            $validated['description'] ?? null,
+            $validated['parent_id'] ?? null
+        );
 
         $updatedCategory = $this->categoryRepository->update($id, $dto->toEntity());
         return CategoryDTO::fromEntity($updatedCategory);
@@ -51,8 +64,7 @@ class CategoryService
      */
     public function getRootCategories(): array
     {
-        $categories = $this->categoryRepository->findRootCategories();
-        return array_map(fn($category) => CategoryDTO::fromEntity($category), $categories);
+        return $this->categoryRepository->getRootCategories();
     }
 
     /**
@@ -62,5 +74,76 @@ class CategoryService
     {
         $categories = $this->categoryRepository->findByParentId($parentId);
         return array_map(fn($category) => CategoryDTO::fromEntity($category), $categories);
+    }
+
+    /**
+     * 作成フォーム用のデータを取得
+     */
+    public function getCreateFormData(): array
+    {
+        return [
+            'categories' => $this->categoryRepository->getRootCategories()
+        ];
+    }
+
+    /**
+     * カテゴリーデータを取得
+     */
+    public function getCategoryData(int $id): array
+    {
+        $category = $this->categoryRepository->findById($id);
+        if (!$category) {
+            throw new \Exception('カテゴリーが見つかりません。');
+        }
+
+        return [
+            'category' => CategoryDTO::fromEntity($category),
+            'children' => array_map(fn($child) => CategoryDTO::fromEntity($child), $this->categoryRepository->getChildren($id))
+        ];
+    }
+
+    /**
+     * 編集フォーム用のデータを取得
+     */
+    public function getEditFormData(int $id): array
+    {
+        $category = $this->categoryRepository->findById($id);
+        if (!$category) {
+            throw new \Exception('カテゴリーが見つかりません。');
+        }
+
+        return [
+            'category' => CategoryDTO::fromEntity($category),
+            'categories' => $this->categoryRepository->getRootCategories()
+        ];
+    }
+
+    /**
+     * カテゴリーを削除
+     */
+    public function deleteCategory(int $id): void
+    {
+        $category = $this->categoryRepository->findById($id);
+        if (!$category) {
+            throw new \Exception('カテゴリーが見つかりません。');
+        }
+
+        $this->categoryRepository->delete($id);
+    }
+
+    /**
+     * 子カテゴリーデータを取得
+     */
+    public function getChildrenData(int $id): array
+    {
+        $category = $this->categoryRepository->findById($id);
+        if (!$category) {
+            throw new \Exception('カテゴリーが見つかりません。');
+        }
+
+        return [
+            'category' => CategoryDTO::fromEntity($category),
+            'children' => array_map(fn($child) => CategoryDTO::fromEntity($child), $this->categoryRepository->getChildren($id))
+        ];
     }
 } 

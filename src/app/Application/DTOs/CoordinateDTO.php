@@ -2,48 +2,77 @@
 
 namespace App\Application\DTOs;
 
+use App\Domain\Entities\Coordinate;
+
 class CoordinateDTO
 {
     public function __construct(
-        public readonly ?int $id,
-        public readonly string $name,
-        public readonly string $description,
-        public readonly ?string $imagePath,
-        public readonly array $clothesIds,
-        public readonly int $userId,
-        public readonly ?string $deletedAt = null,
+        private string $name,
+        private string $description,
+        private ?string $imagePath,
+        private int $userId,
+        private array $clothesIds,
+        private ?int $id = null
     ) {
+    }
+
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    public function getDescription(): string
+    {
+        return $this->description;
+    }
+
+    public function getImagePath(): ?string
+    {
+        return $this->imagePath;
+    }
+
+    public function getUserId(): int
+    {
+        return $this->userId;
+    }
+
+    public function getClothesIds(): array
+    {
+        return $this->clothesIds;
+    }
+
+    public function getId(): ?int
+    {
+        return $this->id;
     }
 
     /**
      * ドメインエンティティからDTOを作成
      */
-    public static function fromEntity(\App\Domain\Entities\Coordinate $coordinate): self
+    public static function fromEntity(Coordinate $coordinate): self
     {
         return new self(
-            id: $coordinate->getId(),
-            name: $coordinate->getName(),
-            description: $coordinate->getDescription(),
-            imagePath: $coordinate->getImagePath(),
-            clothesIds: $coordinate->getClothesIds(),
-            userId: $coordinate->getUserId(),
-            deletedAt: $coordinate->getDeletedAt(),
+            $coordinate->getName(),
+            $coordinate->getDescription(),
+            $coordinate->getImagePath(),
+            $coordinate->getUserId(),
+            $coordinate->getClothesIds(),
+            $coordinate->getId()
         );
     }
 
     /**
      * DTOからドメインエンティティを作成
      */
-    public function toEntity(): \App\Domain\Entities\Coordinate
+    public function toEntity(): Coordinate
     {
-        return new \App\Domain\Entities\Coordinate(
-            id: $this->id,
-            name: $this->name,
-            description: $this->description,
-            imagePath: $this->imagePath,
-            clothesIds: $this->clothesIds,
-            userId: $this->userId,
-            deletedAt: $this->deletedAt,
+        return new Coordinate(
+            $this->id ?? 0,
+            $this->name,
+            $this->description,
+            $this->imagePath,
+            $this->clothesIds,
+            $this->userId
         );
     }
 
@@ -53,13 +82,12 @@ class CoordinateDTO
     public static function fromArray(array $data): self
     {
         return new self(
-            id: $data['id'] ?? null,
-            name: $data['name'],
-            description: $data['description'] ?? '',
-            imagePath: $data['image_path'] ?? null,
-            clothesIds: $data['clothes_ids'] ?? [],
-            userId: $data['user_id'],
-            deletedAt: $data['deleted_at'] ?? null,
+            $data['name'],
+            $data['description'] ?? '',
+            $data['image_path'] ?? null,
+            $data['user_id'],
+            $data['clothes_ids'] ?? [],
+            $data['id'] ?? null
         );
     }
 
@@ -75,7 +103,6 @@ class CoordinateDTO
             'image_path' => $this->imagePath,
             'clothes_ids' => $this->clothesIds,
             'user_id' => $this->userId,
-            'deleted_at' => $this->deletedAt,
         ];
     }
 } 

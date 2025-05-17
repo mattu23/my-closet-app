@@ -7,11 +7,6 @@ use App\Domain\Entities\Category;
 interface CategoryRepositoryInterface
 {
     /**
-     * カテゴリーをIDで検索
-     */
-    public function findById(int $id): ?Category;
-
-    /**
      * カテゴリーを作成
      */
     public function create(Category $category): Category;
@@ -22,20 +17,27 @@ interface CategoryRepositoryInterface
     public function update(int $id, Category $category): Category;
 
     /**
-     * ルートカテゴリーを取得
-     * @return Category[]
+     * カテゴリーを削除
      */
-    public function findRootCategories(): array;
+    public function delete(int $id): void;
 
     /**
-     * 特定の親カテゴリーに属するカテゴリーを取得
-     * @return Category[]
+     * IDでカテゴリーを取得
+     */
+    public function findById(int $id): ?Category;
+
+    /**
+     * 親IDでカテゴリーを取得
      */
     public function findByParentId(int $parentId): array;
 
     /**
-     * 特定のカテゴリーの子カテゴリーを全て取得（再帰的）
-     * @return Category[]
+     * ルートカテゴリーを取得
      */
-    public function findAllChildren(int $categoryId): array;
+    public function getRootCategories(): array;
+
+    /**
+     * 子カテゴリーを取得
+     */
+    public function getChildren(int $id): array;
 } 
