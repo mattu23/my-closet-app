@@ -1,34 +1,65 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            ダッシュボード
-        </h2>
+        <div class="flex justify-between items-center">
+            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                {{ $category->getName() }}
+            </h2>
+            <div class="flex items-center space-x-2">
+                <a href="{{ route('categories.edit', $category->getId()) }}" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700">
+                    編集
+                </a>
+                <form method="POST" action="{{ route('categories.destroy', $category->getId()) }}" class="inline">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-700" onclick="return confirm('本当に削除しますか？')">
+                        削除
+                    </button>
+                </form>
+            </div>
+        </div>
     </x-slot>
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <!-- ユーザー情報セクション -->
+            <!-- カテゴリー情報 -->
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
                 <div class="p-6 text-gray-900">
-                    <div class="flex items-center space-x-4">
-                        <div class="flex-shrink-0">
-                            <div class="w-16 h-16 rounded-full bg-blue-600 flex items-center justify-center">
-                                <span class="text-2xl font-bold text-white">{{ substr(auth()->user()->name, 0, 1) }}</span>
-                            </div>
-                        </div>
+                    <div class="space-y-4">
                         <div>
-                            <h3 class="text-lg font-medium text-gray-900">{{ auth()->user()->name }}</h3>
-                            <p class="text-sm text-gray-500">{{ auth()->user()->email }}</p>
+                            <h3 class="text-lg font-medium text-gray-900">説明</h3>
+                            <p class="mt-1 text-sm text-gray-500">{{ $category->getDescription() ?? '説明はありません。' }}</p>
                         </div>
+
+                        @if($category->getParent())
+                            <div>
+                                <h3 class="text-lg font-medium text-gray-900">親カテゴリー</h3>
+                                <a href="{{ route('categories.show', $category->getParent()->getId()) }}" class="mt-1 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 hover:bg-purple-200">
+                                    {{ $category->getParent()->getName() }}
+                                </a>
+                            </div>
+                        @endif
+
+                        @if($category->getChildren()->isNotEmpty())
+                            <div>
+                                <h3 class="text-lg font-medium text-gray-900">サブカテゴリー</h3>
+                                <div class="mt-2 flex flex-wrap gap-2">
+                                    @foreach($category->getChildren() as $child)
+                                        <a href="{{ route('categories.show', $child->getId()) }}" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 hover:bg-purple-200">
+                                            {{ $child->getName() }}
+                                        </a>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>
 
-            <!-- 洋服一覧セクション -->
+            <!-- 洋服一覧 -->
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
                     <div class="flex justify-between items-center mb-6">
-                        <h3 class="text-lg font-medium text-gray-900">マイクローゼット</h3>
+                        <h3 class="text-lg font-medium text-gray-900">このカテゴリーの洋服</h3>
                         <a href="{{ route('clothes.create') }}" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700">
                             洋服を追加
                         </a>
@@ -36,7 +67,7 @@
 
                     @if($clothes->isEmpty())
                         <div class="text-center py-12">
-                            <p class="text-gray-500">洋服が登録されていません。</p>
+                            <p class="text-gray-500">このカテゴリーに属する洋服はありません。</p>
                             <a href="{{ route('clothes.create') }}" class="mt-4 inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700">
                                 洋服を追加する
                             </a>
@@ -67,11 +98,6 @@
                                                         {{ $item->getColor()->getName() }}
                                                     </span>
                                                 @endif
-                                                @if($item->getCategory())
-                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                                                        {{ $item->getCategory()->getName() }}
-                                                    </span>
-                                                @endif
                                             </div>
                                         </div>
                                     </a>
@@ -83,4 +109,4 @@
             </div>
         </div>
     </div>
-</x-app-layout>
+</x-app-layout> 

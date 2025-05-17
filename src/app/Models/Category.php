@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 class Category extends Model
@@ -22,53 +24,78 @@ class Category extends Model
         'description', // カテゴリーの説明
         'parent_id',   // 親カテゴリーのID
         'path',        // 階層パス（自動生成）
-        'level'        // 階層の深さ（自動生成）
+        'level',       // 階層の深さ（自動生成）
+        'user_id',     // カテゴリーを所有するユーザーのID
     ];
 
     /**
-     * 親カテゴリーを取得
-     * pathから親カテゴリーのIDを抽出して取得
-     * 例：pathが"1/5/8"の場合、ID:5のカテゴリーを取得
+     * このカテゴリーの親カテゴリー
      */
-    public function getParentAttribute()
+    public function parent(): BelongsTo
     {
-        if (!$this->path) return null;
-        $pathParts = explode('/', $this->path);
-        if (count($pathParts) < 2) return null;
-        $parentId = $pathParts[count($pathParts) - 2];
-        return self::find($parentId);
+        return $this->belongsTo(Category::class, 'parent_id');
     }
 
     /**
-     * 直接の子カテゴリーを取得
-     * 現在のカテゴリーの直下にあるカテゴリーのみを取得
-     * 例：トップス（ID:1）の子カテゴリーとしてTシャツ、シャツ、ニットを取得
+     * このカテゴリーの子カテゴリー
      */
-    public function getChildrenAttribute()
+    public function children(): HasMany
     {
-        return self::where('path', 'LIKE', $this->path . '/%')
-            ->where('level', $this->level + 1)
-            ->get();
+        return $this->hasMany(Category::class, 'parent_id');
     }
 
     /**
-     * 全ての子カテゴリーを再帰的に取得
-     * 現在のカテゴリーの下にある全てのカテゴリーを取得
-     * 例：トップス（ID:1）の下にある全てのカテゴリーを取得
+     * このカテゴリーに属する洋服
      */
-    public function getAllChildrenAttribute()
-    {
-        return self::where('path', 'LIKE', $this->path . '/%')
-            ->orderBy('level')
-            ->get();
-    }
-
-    /**
-     * このカテゴリーに属する洋服を取得
-     */
-    public function clothes()
+    public function clothes(): HasMany
     {
         return $this->hasMany(Clothes::class);
+    }
+
+    /**
+     * このカテゴリーを所有するユーザー
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    /**
+     * ルートカテゴリーかどうか
+     */
+    public function isRoot(): bool
+    {
+        return $this->parent_id === null;
+    }
+
+    /**
+     * 子カテゴリーを持つかどうか
+     */
+    public function hasChildren(): bool
+    {
+        return $this->children()->count() > 0;
+    }
+
+    /**
+     * 全ての子孫カテゴリーを取得（再帰的）
+     */
+    public function getAllChildren(): array
+    {
+        $result = [];
+        $this->getChildrenRecursive($this->id, $result);
+        return $result;
+    }
+
+    /**
+     * 子カテゴリーを再帰的に取得
+     */
+    private function getChildrenRecursive(int $parentId, array &$result): void
+    {
+        $children = Category::where('parent_id', $parentId)->get();
+        foreach ($children as $child) {
+            $result[] = $child;
+            $this->getChildrenRecursive($child->id, $result);
+        }
     }
 
     /**
