@@ -4,30 +4,19 @@ namespace App\Domain\Entities;
 
 class Coordinate
 {
-    private int $id;
-    private string $name;
-    private string $description;
-    private ?string $imagePath;
-    private array $clothesIds;
-    private int $userId;
-    private ?string $deletedAt;
-
+    /**
+     * @param array<int> $clothesIds
+     */
     public function __construct(
-        int $id,
-        string $name,
-        string $description,
-        ?string $imagePath,
-        array $clothesIds,
-        int $userId,
-        ?string $deletedAt = null
+        private int $id,
+        private string $name,
+        private string $description,
+        private ?string $imagePath,
+        private array $clothesIds,
+        private int $userId,
+        private ?string $createdAt = null,
+        private ?string $deletedAt = null
     ) {
-        $this->id = $id;
-        $this->name = $name;
-        $this->description = $description;
-        $this->imagePath = $imagePath;
-        $this->clothesIds = $clothesIds;
-        $this->userId = $userId;
-        $this->deletedAt = $deletedAt;
     }
 
     public function getId(): int
@@ -50,6 +39,9 @@ class Coordinate
         return $this->imagePath;
     }
 
+    /**
+     * @return array<int>
+     */
     public function getClothesIds(): array
     {
         return $this->clothesIds;
@@ -60,6 +52,11 @@ class Coordinate
         return $this->userId;
     }
 
+    public function getCreatedAt(): ?string
+    {
+        return $this->createdAt;
+    }
+
     public function getDeletedAt(): ?string
     {
         return $this->deletedAt;
@@ -68,6 +65,11 @@ class Coordinate
     public function isDeleted(): bool
     {
         return $this->deletedAt !== null;
+    }
+
+    public function hasClothes(int $clothesId): bool
+    {
+        return in_array($clothesId, $this->clothesIds, true);
     }
 
     public function changeName(string $name): void

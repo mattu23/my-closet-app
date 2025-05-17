@@ -2,42 +2,61 @@
 
 namespace App\Application\DTOs;
 
+use App\Domain\Entities\Category;
+
 class CategoryDTO
 {
     public function __construct(
-        public readonly ?int $id,
-        public readonly string $name,
-        public readonly ?int $parentId,
-        public readonly int $userId,
-        public readonly ?string $deletedAt = null,
+        private string $name,
+        private ?string $description,
+        private ?int $parentId,
+        private ?int $id = null
     ) {
+    }
+
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    public function getDescription(): ?string
+    {
+        return $this->description;
+    }
+
+    public function getParentId(): ?int
+    {
+        return $this->parentId;
+    }
+
+    public function getId(): ?int
+    {
+        return $this->id;
     }
 
     /**
      * ドメインエンティティからDTOを作成
      */
-    public static function fromEntity(\App\Domain\Entities\Category $category): self
+    public static function fromEntity(Category $category): self
     {
         return new self(
-            id: $category->getId(),
-            name: $category->getName(),
-            parentId: $category->getParentId(),
-            userId: $category->getUserId(),
-            deletedAt: $category->getDeletedAt(),
+            $category->getName(),
+            $category->getDescription(),
+            $category->getParentId(),
+            $category->getId()
         );
     }
 
     /**
      * DTOからドメインエンティティを作成
      */
-    public function toEntity(): \App\Domain\Entities\Category
+    public function toEntity(): Category
     {
-        return new \App\Domain\Entities\Category(
-            id: $this->id,
-            name: $this->name,
-            parentId: $this->parentId,
-            userId: $this->userId,
-            deletedAt: $this->deletedAt,
+        return new Category(
+            $this->id ?? 0,
+            $this->name,
+            $this->description,
+            $this->parentId
         );
     }
 
@@ -47,11 +66,10 @@ class CategoryDTO
     public static function fromArray(array $data): self
     {
         return new self(
-            id: $data['id'] ?? null,
-            name: $data['name'],
-            parentId: $data['parent_id'] ?? null,
-            userId: $data['user_id'],
-            deletedAt: $data['deleted_at'] ?? null,
+            $data['name'],
+            $data['description'] ?? null,
+            $data['parent_id'] ?? null,
+            $data['id'] ?? null
         );
     }
 
@@ -64,8 +82,7 @@ class CategoryDTO
             'id' => $this->id,
             'name' => $this->name,
             'parent_id' => $this->parentId,
-            'user_id' => $this->userId,
-            'deleted_at' => $this->deletedAt,
+            'description' => $this->description,
         ];
     }
 } 

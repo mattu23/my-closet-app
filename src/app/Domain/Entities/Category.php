@@ -5,13 +5,13 @@ namespace App\Domain\Entities;
 class Category
 {
     public function __construct(
-        private readonly int $id,
-        private readonly string $name,
-        private readonly string $slug,
-        private readonly ?string $description,
-        private readonly ?int $parentId,
-        private readonly ?string $path,
-        private readonly int $level
+        private int $id,
+        private string $name,
+        private ?string $description,
+        private ?int $parentId,
+        private int $userId,
+        private ?string $createdAt = null,
+        private ?string $deletedAt = null
     ) {
     }
 
@@ -25,11 +25,6 @@ class Category
         return $this->name;
     }
 
-    public function getSlug(): string
-    {
-        return $this->slug;
-    }
-
     public function getDescription(): ?string
     {
         return $this->description;
@@ -40,23 +35,28 @@ class Category
         return $this->parentId;
     }
 
-    public function getPath(): ?string
+    public function getUserId(): int
     {
-        return $this->path;
+        return $this->userId;
     }
 
-    public function getLevel(): int
+    public function getCreatedAt(): ?string
     {
-        return $this->level;
+        return $this->createdAt;
+    }
+
+    public function getDeletedAt(): ?string
+    {
+        return $this->deletedAt;
+    }
+
+    public function isDeleted(): bool
+    {
+        return $this->deletedAt !== null;
     }
 
     public function isRoot(): bool
     {
         return $this->parentId === null;
-    }
-
-    public function hasChildren(): bool
-    {
-        return $this->level > 1;
     }
 } 
