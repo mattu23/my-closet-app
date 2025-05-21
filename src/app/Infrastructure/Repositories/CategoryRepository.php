@@ -145,4 +145,21 @@ class CategoryRepository implements CategoryRepositoryInterface
             );
         })->all();
     }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function findAllChildren(int $categoryId): array
+    {
+        $children = [];
+        $directChildren = $this->getChildren($categoryId);
+        
+        foreach ($directChildren as $child) {
+            $children[] = $child;
+            $grandChildren = $this->findAllChildren($child->getId());
+            $children = array_merge($children, $grandChildren);
+        }
+        
+        return $children;
+    }
 } 

@@ -14,7 +14,7 @@ interface ClothesRepositoryInterface
     /**
      * IDで洋服を取得
      */
-    public function findById(int $id): ?Clothes;
+    public function findById(int $id): ?array;
 
     /**
      * ユーザーIDで洋服を取得

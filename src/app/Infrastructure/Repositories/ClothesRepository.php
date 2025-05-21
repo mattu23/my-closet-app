@@ -5,9 +5,6 @@ namespace App\Infrastructure\Repositories;
 use App\Domain\Entities\Clothes;
 use App\Domain\Repositories\ClothesRepositoryInterface;
 use App\Domain\Repositories\CategoryRepositoryInterface;
-use App\Domain\ValueObjects\Size;
-use App\Domain\ValueObjects\Color;
-use App\Domain\ValueObjects\Brand;
 use App\Models\Clothes as ClothesModel;
 use Illuminate\Support\Facades\DB;
 
@@ -21,56 +18,25 @@ class ClothesRepository implements ClothesRepositoryInterface
     }
 
     /**
-     * モデルからエンティティに変換
-     */
-    private function toEntity(ClothesModel $model): Clothes
-    {
-        // 値オブジェクトの作成
-        $size = $model->size ? new Size($model->size) : null;
-        
-        $color = null;
-        if ($model->color_name && $model->color_code) {
-            try {
-                $color = new Color($model->color_name, $model->color_code);
-            } catch (\InvalidArgumentException $e) {
-                // 無効な色情報の場合はnullのまま
-            }
-        }
-        
-        $brand = null;
-        if ($model->brand_name) {
-            try {
-                $brand = new Brand(
-                    $model->brand_name,
-                    $model->brand_description,
-                    $model->brand_country
-                );
-            } catch (\InvalidArgumentException $e) {
-                // 無効なブランド情報の場合はnullのまま
-            }
-        }
-        
-        return new Clothes(
-            $model->id,
-            $model->name,
-            $model->description,
-            $model->image_path,
-            $model->category_id,
-            $model->user_id,
-            $size,
-            $color,
-            $brand,
-            $model->deleted_at ? $model->deleted_at->format('Y-m-d H:i:s') : null
-        );
-    }
-
-    /**
      * {@inheritdoc}
      */
-    public function findById(int $id): ?Clothes
+    public function findById(int $id): ?array
     {
         $model = ClothesModel::find($id);
-        return $model ? $this->toEntity($model) : null;
+        return $model ? [
+            'id' => $model->id,
+            'name' => $model->name,
+            'description' => $model->description,
+            'image_path' => $model->image_path,
+            'category_id' => $model->category_id,
+            'user_id' => $model->user_id,
+            'size' => $model->size,
+            'color_name' => $model->color_name,
+            'color_code' => $model->color_code,
+            'brand_name' => $model->brand_name,
+            'brand_description' => $model->brand_description,
+            'brand_country' => $model->brand_country,
+        ] : null;
     }
 
     /**
@@ -80,7 +46,20 @@ class ClothesRepository implements ClothesRepositoryInterface
     {
         $models = ClothesModel::where('user_id', $userId)->get();
         return $models->map(function ($model) {
-            return $this->toEntity($model);
+            return [
+                'id' => $model->id,
+                'name' => $model->name,
+                'description' => $model->description,
+                'image_path' => $model->image_path,
+                'category_id' => $model->category_id,
+                'user_id' => $model->user_id,
+                'size' => $model->size,
+                'color_name' => $model->color_name,
+                'color_code' => $model->color_code,
+                'brand_name' => $model->brand_name,
+                'brand_description' => $model->brand_description,
+                'brand_country' => $model->brand_country,
+            ];
         })->toArray();
     }
 
@@ -91,7 +70,20 @@ class ClothesRepository implements ClothesRepositoryInterface
     {
         $models = ClothesModel::where('category_id', $categoryId)->get();
         return $models->map(function ($model) {
-            return $this->toEntity($model);
+            return [
+                'id' => $model->id,
+                'name' => $model->name,
+                'description' => $model->description,
+                'image_path' => $model->image_path,
+                'category_id' => $model->category_id,
+                'user_id' => $model->user_id,
+                'size' => $model->size,
+                'color_name' => $model->color_name,
+                'color_code' => $model->color_code,
+                'brand_name' => $model->brand_name,
+                'brand_description' => $model->brand_description,
+                'brand_country' => $model->brand_country,
+            ];
         })->toArray();
     }
 
@@ -110,7 +102,47 @@ class ClothesRepository implements ClothesRepositoryInterface
         // カテゴリーIDリストに一致する洋服を取得
         $models = ClothesModel::whereIn('category_id', $categoryIds)->get();
         return $models->map(function ($model) {
-            return $this->toEntity($model);
+            return [
+                'id' => $model->id,
+                'name' => $model->name,
+                'description' => $model->description,
+                'image_path' => $model->image_path,
+                'category_id' => $model->category_id,
+                'user_id' => $model->user_id,
+                'size' => $model->size,
+                'color_name' => $model->color_name,
+                'color_code' => $model->color_code,
+                'brand_name' => $model->brand_name,
+                'brand_description' => $model->brand_description,
+                'brand_country' => $model->brand_country,
+            ];
+        })->toArray();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function findByCoordinateId(int $coordinateId): array
+    {
+        $models = ClothesModel::whereHas('coordinates', function ($query) use ($coordinateId) {
+            $query->where('coordinates.id', $coordinateId);
+        })->get();
+
+        return $models->map(function ($model) {
+            return [
+                'id' => $model->id,
+                'name' => $model->name,
+                'description' => $model->description,
+                'image_path' => $model->image_path,
+                'category_id' => $model->category_id,
+                'user_id' => $model->user_id,
+                'size' => $model->size,
+                'color_name' => $model->color_name,
+                'color_code' => $model->color_code,
+                'brand_name' => $model->brand_name,
+                'brand_description' => $model->brand_description,
+                'brand_country' => $model->brand_country,
+            ];
         })->toArray();
     }
 
@@ -126,31 +158,12 @@ class ClothesRepository implements ClothesRepositoryInterface
             $model->image_path = $clothes->getImagePath();
             $model->category_id = $clothes->getCategoryId();
             $model->user_id = $clothes->getUserId();
-            
-            // 値オブジェクトの保存
-            if ($clothes->hasSize()) {
-                $model->size = $clothes->getSize()->getValue();
-            } else {
-                $model->size = null;
-            }
-            
-            if ($clothes->hasColor()) {
-                $model->color_name = $clothes->getColor()->getName();
-                $model->color_code = $clothes->getColor()->getHexCode();
-            } else {
-                $model->color_name = null;
-                $model->color_code = null;
-            }
-            
-            if ($clothes->hasBrand()) {
-                $model->brand_name = $clothes->getBrand()->getName();
-                $model->brand_description = $clothes->getBrand()->getDescription();
-                $model->brand_country = $clothes->getBrand()->getCountry();
-            } else {
-                $model->brand_name = null;
-                $model->brand_description = null;
-                $model->brand_country = null;
-            }
+            $model->size = $clothes->getSize();
+            $model->color_name = $clothes->getColorName();
+            $model->color_code = $clothes->getColorCode();
+            $model->brand_name = $clothes->getBrandName();
+            $model->brand_description = $clothes->getBrandDescription();
+            $model->brand_country = $clothes->getBrandCountry();
             
             if ($clothes->isDeleted()) {
                 $model->deleted_at = $clothes->getDeletedAt();

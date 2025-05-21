@@ -40,4 +40,11 @@ interface CategoryRepositoryInterface
      * 子カテゴリーを取得
      */
     public function getChildren(int $id): array;
+
+    /**
+     * カテゴリーの子カテゴリーをすべて取得
+     * @param int $categoryId 親カテゴリーID
+     * @return array 子カテゴリーの配列
+     */
+    public function findAllChildren(int $categoryId): array;
 } 
