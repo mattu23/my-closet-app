@@ -149,46 +149,38 @@ class ClothesRepository implements ClothesRepositoryInterface
     /**
      * {@inheritdoc}
      */
-    public function save(Clothes $clothes): void
+    public function save(array $clothes): void
     {
         DB::transaction(function () use ($clothes) {
-            $model = ClothesModel::findOrNew($clothes->getId() ?: null);
-            $model->name = $clothes->getName();
-            $model->description = $clothes->getDescription();
-            $model->image_path = $clothes->getImagePath();
-            $model->category_id = $clothes->getCategoryId();
-            $model->user_id = $clothes->getUserId();
-            $model->size = $clothes->getSize();
-            $model->color_name = $clothes->getColorName();
-            $model->color_code = $clothes->getColorCode();
-            $model->brand_name = $clothes->getBrandName();
-            $model->brand_description = $clothes->getBrandDescription();
-            $model->brand_country = $clothes->getBrandCountry();
+            $model = ClothesModel::findOrNew($clothes['id'] ?: null);
+            $model->name = $clothes['name'];
+            $model->description = $clothes['description'];
+            $model->image_path = $clothes['image_path'];
+            $model->category_id = $clothes['category_id'];
+            $model->user_id = $clothes['user_id'];
+            $model->size = $clothes['size'];
+            $model->color_name = $clothes['color_name'];
+            $model->color_code = $clothes['color_code'];
+            $model->brand_name = $clothes['brand_name'];
+            $model->brand_description = $clothes['brand_description'];
+            $model->brand_country = $clothes['brand_country'];
             
-            if ($clothes->isDeleted()) {
-                $model->deleted_at = $clothes->getDeletedAt();
+            if (isset($clothes['deleted_at'])) {
+                $model->deleted_at = $clothes['deleted_at'];
             } else {
                 $model->deleted_at = null;
             }
             
             $model->save();
-            
-            // IDが0（新規作成）の場合、エンティティにIDを設定
-            if ($clothes->getId() === 0) {
-                $reflectionClass = new \ReflectionClass($clothes);
-                $reflectionProperty = $reflectionClass->getProperty('id');
-                $reflectionProperty->setAccessible(true);
-                $reflectionProperty->setValue($clothes, $model->id);
-            }
         });
     }
 
     /**
      * {@inheritdoc}
      */
-    public function delete(Clothes $clothes): void
+    public function delete(array $clothes): void
     {
-        $clothes->delete();
+        $clothes['deleted_at'] = date('Y-m-d H:i:s');
         $this->save($clothes);
     }
 } 
