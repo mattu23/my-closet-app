@@ -11,6 +11,7 @@ use App\Domain\ValueObjects\Brand;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Log;
 
 class ClothesService
 {
@@ -349,6 +350,12 @@ class ClothesService
     public function getDashboardData(): array
     {
         $userId = Auth::id();
+        Log::info('userIdの取得成功'. $userId);
+
+        if (!$userId) {
+            throw new \Exception('ユーザーが見つかりません。');
+        }
+
         return [
             'clothes' => collect($this->clothesRepository->findByUserId($userId)),
             'categories' => $this->categoryRepository->getRootCategories()
