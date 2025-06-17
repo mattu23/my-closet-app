@@ -31,11 +31,6 @@ class ClothesRepository implements ClothesRepositoryInterface
             'category_id' => $model->category_id,
             'user_id' => $model->user_id,
             'size' => $model->size,
-            'color_name' => $model->color_name,
-            'color_code' => $model->color_code,
-            'brand_name' => $model->brand_name,
-            'brand_description' => $model->brand_description,
-            'brand_country' => $model->brand_country,
         ] : null;
     }
 
@@ -54,11 +49,6 @@ class ClothesRepository implements ClothesRepositoryInterface
                 'category_id' => $model->category_id,
                 'user_id' => $model->user_id,
                 'size' => $model->size,
-                'color_name' => $model->color_name,
-                'color_code' => $model->color_code,
-                'brand_name' => $model->brand_name,
-                'brand_description' => $model->brand_description,
-                'brand_country' => $model->brand_country,
             ];
         })->toArray();
     }
@@ -78,11 +68,6 @@ class ClothesRepository implements ClothesRepositoryInterface
                 'category_id' => $model->category_id,
                 'user_id' => $model->user_id,
                 'size' => $model->size,
-                'color_name' => $model->color_name,
-                'color_code' => $model->color_code,
-                'brand_name' => $model->brand_name,
-                'brand_description' => $model->brand_description,
-                'brand_country' => $model->brand_country,
             ];
         })->toArray();
     }
@@ -110,11 +95,6 @@ class ClothesRepository implements ClothesRepositoryInterface
                 'category_id' => $model->category_id,
                 'user_id' => $model->user_id,
                 'size' => $model->size,
-                'color_name' => $model->color_name,
-                'color_code' => $model->color_code,
-                'brand_name' => $model->brand_name,
-                'brand_description' => $model->brand_description,
-                'brand_country' => $model->brand_country,
             ];
         })->toArray();
     }
@@ -137,11 +117,6 @@ class ClothesRepository implements ClothesRepositoryInterface
                 'category_id' => $model->category_id,
                 'user_id' => $model->user_id,
                 'size' => $model->size,
-                'color_name' => $model->color_name,
-                'color_code' => $model->color_code,
-                'brand_name' => $model->brand_name,
-                'brand_description' => $model->brand_description,
-                'brand_country' => $model->brand_country,
             ];
         })->toArray();
     }
@@ -159,11 +134,6 @@ class ClothesRepository implements ClothesRepositoryInterface
             $model->category_id = $clothes['category_id'];
             $model->user_id = $clothes['user_id'];
             $model->size = $clothes['size'];
-            $model->color_name = $clothes['color_name'];
-            $model->color_code = $clothes['color_code'];
-            $model->brand_name = $clothes['brand_name'];
-            $model->brand_description = $clothes['brand_description'];
-            $model->brand_country = $clothes['brand_country'];
             
             if (isset($clothes['deleted_at'])) {
                 $model->deleted_at = $clothes['deleted_at'];

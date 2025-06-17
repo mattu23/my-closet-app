@@ -93,31 +93,26 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                             @foreach($clothes as $item)
                                 <div class="bg-white rounded-lg shadow-sm overflow-hidden">
-                                    <a href="{{ route('clothes.show', $item->getId()) }}" class="block">
-                                        @if($item->getImagePath())
-                                            <img src="{{ asset('storage/' . $item->getImagePath()) }}" alt="{{ $item->getName() }}" class="w-full h-48 object-cover">
+                                    <a href="{{ route('clothes.show', $item['id']) }}" class="block">
+                                        @if($item['image_path'])
+                                            <img src="{{ asset('storage/' . $item['image_path']) }}" alt="{{ $item['name'] }}" class="w-full h-48 object-cover">
                                         @else
                                             <div class="w-full h-48 bg-gray-100 flex items-center justify-center">
                                                 <span class="text-gray-400">No Image</span>
                                             </div>
                                         @endif
                                         <div class="p-4">
-                                            <h3 class="text-lg font-medium text-gray-900">{{ $item->getName() }}</h3>
-                                            <p class="mt-1 text-sm text-gray-500">{{ Str::limit($item->getDescription(), 100) }}</p>
+                                            <h3 class="text-lg font-medium text-gray-900">{{ $item['name'] }}</h3>
+                                            <p class="mt-1 text-sm text-gray-500">{{ Str::limit($item['description'], 100) }}</p>
                                             <div class="mt-4 flex flex-wrap gap-2">
-                                                @if($item->getSize())
+                                                @if($item['size'])
                                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                                        {{ $item->getSize() }}
+                                                        {{ $item['size'] }}
                                                     </span>
                                                 @endif
-                                                @if($item->getColor())
-                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                                        {{ $item->getColor()->getName() }}
-                                                    </span>
-                                                @endif
-                                                @if($item->getCategory())
+                                                @if(isset($item['category']))
                                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                                                        {{ $item->getCategory()->getName() }}
+                                                        {{ $item['category']['name'] }}
                                                     </span>
                                                 @endif
                                             </div>

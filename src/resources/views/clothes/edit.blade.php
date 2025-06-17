@@ -9,13 +9,13 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
-                    <form method="POST" action="{{ route('clothes.update', $clothes->getId()) }}" enctype="multipart/form-data" class="space-y-6">
+                    <form method="POST" action="{{ route('clothes.update', $clothes['id']) }}" enctype="multipart/form-data" class="space-y-6">
                         @csrf
                         @method('PUT')
 
                         <div>
                             <x-input-label for="name" :value="__('名前')" />
-                            <x-text-input id="name" name="name" type="text" class="mt-1 block w-full" :value="old('name', $clothes->getName())" required autofocus />
+                            <x-text-input id="name" name="name" type="text" class="mt-1 block w-full" :value="old('name', $clothes['name'])" required autofocus />
                             <x-input-error class="mt-2" :messages="$errors->get('name')" />
                         </div>
 
@@ -27,7 +27,7 @@
                                 class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
                                 rows="3"
                                 required
-                            >{{ old('description', $clothes->getDescription()) }}</textarea>
+                            >{{ old('description', $clothes['description']) }}</textarea>
                             <x-input-error class="mt-2" :messages="$errors->get('description')" />
                         </div>
 
@@ -36,7 +36,7 @@
                             <select id="category_id" name="category_id" class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" required>
                                 <option value="">選択してください</option>
                                 @foreach($categories as $category)
-                                    <option value="{{ $category->getId() }}" {{ old('category_id', $clothes->getCategory()->getId()) == $category->getId() ? 'selected' : '' }}>
+                                    <option value="{{ $category->getId() }}" {{ old('category_id', $clothes['category_id']) == $category->getId() ? 'selected' : '' }}>
                                         {{ $category->getName() }}
                                     </option>
                                 @endforeach
@@ -49,7 +49,7 @@
                             <select id="size" name="size" class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
                                 <option value="">選択してください</option>
                                 @foreach($availableSizes as $size)
-                                    <option value="{{ $size }}" {{ old('size', $clothes->getSize()) == $size ? 'selected' : '' }}>
+                                    <option value="{{ $size }}" {{ old('size', $clothes['size']) == $size ? 'selected' : '' }}>
                                         {{ $size }}
                                     </option>
                                 @endforeach
@@ -59,19 +59,19 @@
 
                         <div>
                             <x-input-label for="color_name" :value="__('色の名前')" />
-                            <x-text-input id="color_name" name="color_name" type="text" class="mt-1 block w-full" :value="old('color_name', $clothes->getColor()?->getName())" />
+                            <x-text-input id="color_name" name="color_name" type="text" class="mt-1 block w-full" :value="old('color_name', $clothes['color_name'])" />
                             <x-input-error class="mt-2" :messages="$errors->get('color_name')" />
                         </div>
 
                         <div>
                             <x-input-label for="color_code" :value="__('色のコード')" />
-                            <x-text-input id="color_code" name="color_code" type="color" class="mt-1 block w-full h-10" :value="old('color_code', $clothes->getColor()?->getHexCode() ?? '#000000')" />
+                            <x-text-input id="color_code" name="color_code" type="color" class="mt-1 block w-full h-10" :value="old('color_code', $clothes['color_code'] ?? '#000000')" />
                             <x-input-error class="mt-2" :messages="$errors->get('color_code')" />
                         </div>
 
                         <div>
                             <x-input-label for="brand_name" :value="__('ブランド名')" />
-                            <x-text-input id="brand_name" name="brand_name" type="text" class="mt-1 block w-full" :value="old('brand_name', $clothes->getBrand()?->getName())" />
+                            <x-text-input id="brand_name" name="brand_name" type="text" class="mt-1 block w-full" :value="old('brand_name', $clothes['brand_name'])" />
                             <x-input-error class="mt-2" :messages="$errors->get('brand_name')" />
                         </div>
 
@@ -82,21 +82,21 @@
                                 name="brand_description"
                                 class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
                                 rows="2"
-                            >{{ old('brand_description', $clothes->getBrand()?->getDescription()) }}</textarea>
+                            >{{ old('brand_description', $clothes['brand_description']) }}</textarea>
                             <x-input-error class="mt-2" :messages="$errors->get('brand_description')" />
                         </div>
 
                         <div>
                             <x-input-label for="brand_country" :value="__('ブランドの国')" />
-                            <x-text-input id="brand_country" name="brand_country" type="text" class="mt-1 block w-full" :value="old('brand_country', $clothes->getBrand()?->getCountry())" />
+                            <x-text-input id="brand_country" name="brand_country" type="text" class="mt-1 block w-full" :value="old('brand_country', $clothes['brand_country'])" />
                             <x-input-error class="mt-2" :messages="$errors->get('brand_country')" />
                         </div>
 
                         <div>
                             <x-input-label for="image" :value="__('画像')" />
-                            @if($clothes->getImagePath())
+                            @if($clothes['image_path'])
                                 <div class="mt-2 mb-4">
-                                    <img src="{{ asset('storage/' . $clothes->getImagePath()) }}" alt="{{ $clothes->getName() }}" class="w-32 h-32 object-cover rounded-lg">
+                                    <img src="{{ asset('storage/' . $clothes['image_path']) }}" alt="{{ $clothes['name'] }}" class="w-32 h-32 object-cover rounded-lg">
                                 </div>
                             @endif
                             <input type="file" id="image" name="image" accept="image/*" class="mt-1 block w-full" />

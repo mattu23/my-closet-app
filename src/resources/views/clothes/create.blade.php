@@ -57,41 +57,6 @@
                         </div>
 
                         <div>
-                            <x-input-label for="color_name" :value="__('色の名前')" />
-                            <x-text-input id="color_name" name="color_name" type="text" class="mt-1 block w-full" :value="old('color_name')" />
-                            <x-input-error class="mt-2" :messages="$errors->get('color_name')" />
-                        </div>
-
-                        <div>
-                            <x-input-label for="color_code" :value="__('色のコード')" />
-                            <x-text-input id="color_code" name="color_code" type="color" class="mt-1 block w-full h-10" :value="old('color_code', '#000000')" />
-                            <x-input-error class="mt-2" :messages="$errors->get('color_code')" />
-                        </div>
-
-                        <div>
-                            <x-input-label for="brand_name" :value="__('ブランド名')" />
-                            <x-text-input id="brand_name" name="brand_name" type="text" class="mt-1 block w-full" :value="old('brand_name')" />
-                            <x-input-error class="mt-2" :messages="$errors->get('brand_name')" />
-                        </div>
-
-                        <div>
-                            <x-input-label for="brand_description" :value="__('ブランドの説明')" />
-                            <textarea
-                                id="brand_description"
-                                name="brand_description"
-                                class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
-                                rows="2"
-                            >{{ old('brand_description') }}</textarea>
-                            <x-input-error class="mt-2" :messages="$errors->get('brand_description')" />
-                        </div>
-
-                        <div>
-                            <x-input-label for="brand_country" :value="__('ブランドの国')" />
-                            <x-text-input id="brand_country" name="brand_country" type="text" class="mt-1 block w-full" :value="old('brand_country')" />
-                            <x-input-error class="mt-2" :messages="$errors->get('brand_country')" />
-                        </div>
-
-                        <div>
                             <x-input-label for="image" :value="__('画像')" />
                             <input type="file" id="image" name="image" accept="image/*" class="mt-1 block w-full" />
                             <x-input-error class="mt-2" :messages="$errors->get('image')" />

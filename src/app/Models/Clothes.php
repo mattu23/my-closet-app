@@ -22,11 +22,6 @@ class Clothes extends Model
         'category_id',
         'user_id',
         'size',
-        'color_name',
-        'color_code',
-        'brand_name',
-        'brand_description',
-        'brand_country',
     ];
 
     /**
@@ -59,22 +54,6 @@ class Clothes extends Model
     public function hasSize(): bool
     {
         return !empty($this->size);
-    }
-    
-    /**
-     * 色情報があるかどうか
-     */
-    public function hasColor(): bool
-    {
-        return !empty($this->color_name) && !empty($this->color_code);
-    }
-    
-    /**
-     * ブランド情報があるかどうか
-     */
-    public function hasBrand(): bool
-    {
-        return !empty($this->brand_name);
     }
     
     /**

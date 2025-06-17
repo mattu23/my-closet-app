@@ -36,12 +36,6 @@ class ClothesService
             });
         }
 
-        if (isset($filters['brand'])) {
-            $clothes = array_filter($clothes, function ($clothes) use ($filters) {
-                return $clothes['brand_name'] === $filters['brand'];
-            });
-        }
-
         return [
             'clothes' => $clothes,
             'availableSizes' => ['S', 'M', 'L', 'XL', 'XXL']
@@ -68,9 +62,7 @@ class ClothesService
         ?string $imagePath,
         int $categoryId,
         int $userId,
-        ?string $size = null,
-        ?array $colorData = null,
-        ?array $brandData = null
+        ?string $size = null
     ): array {
         $clothes = [
             'id' => 0,
@@ -80,11 +72,6 @@ class ClothesService
             'category_id' => $categoryId,
             'user_id' => $userId,
             'size' => $size,
-            'color_name' => $colorData['name'] ?? null,
-            'color_code' => $colorData['hex_code'] ?? null,
-            'brand_name' => $brandData['name'] ?? null,
-            'brand_description' => $brandData['description'] ?? null,
-            'brand_country' => $brandData['country'] ?? null,
         ];
 
         $this->clothesRepository->save($clothes);
@@ -155,36 +142,6 @@ class ClothesService
     }
 
     /**
-     * カテゴリーとその子カテゴリーに属する洋服一覧を取得
-     */
-    public function getClothesByCategoryAndChildren(int $categoryId): array
-    {
-        return $this->clothesRepository->findByCategoryAndChildren($categoryId);
-    }
-    
-    /**
-     * 特定のサイズの洋服を取得
-     */
-    public function getClothesBySize(int $userId, string $size): array
-    {
-        $allClothes = $this->getClothesByUserId($userId);
-        return array_filter($allClothes, function ($clothes) use ($size) {
-            return $clothes['size'] === $size;
-        });
-    }
-    
-    /**
-     * 特定のブランドの洋服を取得
-     */
-    public function getClothesByBrand(int $userId, string $brandName): array
-    {
-        $allClothes = $this->getClothesByUserId($userId);
-        return array_filter($allClothes, function ($clothes) use ($brandName) {
-            return $clothes['brand_name'] === $brandName;
-        });
-    }
-
-    /**
      * 洋服詳細を取得
      */
     public function getClothesDetail(int $id): array
@@ -231,8 +188,7 @@ class ClothesService
         }
 
         return [
-            'clothes' => collect($this->clothesRepository->findByUserId($userId)),
-            'categories' => $this->categoryRepository->getRootCategories()
+            'clothes' => collect($this->clothesRepository->findByUserId($userId))
         ];
     }
 } 
