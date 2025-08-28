@@ -5,8 +5,7 @@ namespace App\Http\Controllers;
 use App\Application\Services\CoordinateService;
 use App\Application\Services\ClothesService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\View\View;
 use Illuminate\Validation\ValidationException;
 
 class CoordinateController extends Controller
@@ -23,27 +22,19 @@ class CoordinateController extends Controller
     /**
      * コーディネート一覧を表示
      */
-    public function index()
+    public function index(): View
     {
-        $userId = Auth::id();
-        $coordinates = $this->coordinateService->getCoordinatesByUserId($userId);
-        
-        return view('coordinates.index', [
-            'coordinates' => $coordinates
-        ]);
+        $coordinatesData = $this->coordinateService->getCoordinatesData();
+        return view('coordinates.index', $coordinatesData);
     }
 
     /**
      * コーディネート作成フォームを表示
      */
-    public function create()
+    public function create(): View
     {
-        $userId = Auth::id();
-        $clothes = $this->clothesService->getClothesByUserId($userId);
-        
-        return view('coordinates.create', [
-            'clothes' => $clothes
-        ]);
+        $formData = $this->coordinateService->getCreateFormData();
+        return view('coordinates.create', $formData);
     }
 
     /**
@@ -60,19 +51,7 @@ class CoordinateController extends Controller
                 'image' => 'nullable|image|max:2048'
             ]);
 
-            $imagePath = null;
-            if ($request->hasFile('image')) {
-                $imagePath = $request->file('image')->store('coordinates', 'public');
-            }
-
-            $userId = Auth::id();
-            $this->coordinateService->createCoordinate(
-                $validated['name'],
-                $validated['description'],
-                $imagePath,
-                $validated['clothes_ids'],
-                $userId
-            );
+            $this->coordinateService->createCoordinate($validated, $request->file('image'));
 
             return redirect()->route('coordinates.index')
                 ->with('success', 'コーディネートを作成しました。');
@@ -90,73 +69,25 @@ class CoordinateController extends Controller
     /**
      * コーディネート詳細を表示
      */
-    public function show($id)
+    public function show(int $id): View
     {
-        $userId = Auth::id();
-        $coordinates = $this->coordinateService->getCoordinatesByUserId($userId);
-        
-        // 表示対象のコーディネートを取得
-        $coordinate = null;
-        foreach ($coordinates as $item) {
-            if ($item->getId() == $id) {
-                $coordinate = $item;
-                break;
-            }
-        }
-
-        if (!$coordinate) {
-            return redirect()->route('coordinates.index')
-                ->with('error', 'コーディネートが見つかりません。');
-        }
-
-        // コーディネートに含まれる洋服を取得
-        $clothes = [];
-        $allClothes = $this->clothesService->getClothesByUserId($userId);
-        foreach ($allClothes as $item) {
-            if (in_array($item->getId(), $coordinate->getClothesIds())) {
-                $clothes[] = $item;
-            }
-        }
-
-        return view('coordinates.show', [
-            'coordinate' => $coordinate,
-            'clothes' => $clothes
-        ]);
+        $coordinateData = $this->coordinateService->getCoordinateDetail($id);
+        return view('coordinates.show', $coordinateData);
     }
 
     /**
      * コーディネート編集フォームを表示
      */
-    public function edit($id)
+    public function edit(int $id): View
     {
-        $userId = Auth::id();
-        $coordinates = $this->coordinateService->getCoordinatesByUserId($userId);
-        $allClothes = $this->clothesService->getClothesByUserId($userId);
-        
-        // 編集対象のコーディネートを取得
-        $coordinate = null;
-        foreach ($coordinates as $item) {
-            if ($item->getId() == $id) {
-                $coordinate = $item;
-                break;
-            }
-        }
-
-        if (!$coordinate) {
-            return redirect()->route('coordinates.index')
-                ->with('error', 'コーディネートが見つかりません。');
-        }
-
-        return view('coordinates.edit', [
-            'coordinate' => $coordinate,
-            'allClothes' => $allClothes
-        ]);
+        $editData = $this->coordinateService->getEditFormData($id);
+        return view('coordinates.edit', $editData);
     }
 
     /**
      * コーディネートを更新
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, int $id)
     {
         try {
             $validated = $request->validate([
@@ -167,39 +98,7 @@ class CoordinateController extends Controller
                 'image' => 'nullable|image|max:2048'
             ]);
 
-            // 現在のコーディネート情報を取得
-            $userId = Auth::id();
-            $coordinates = $this->coordinateService->getCoordinatesByUserId($userId);
-            
-            $coordinate = null;
-            foreach ($coordinates as $item) {
-                if ($item->getId() == $id) {
-                    $coordinate = $item;
-                    break;
-                }
-            }
-
-            if (!$coordinate) {
-                return redirect()->route('coordinates.index')
-                    ->with('error', 'コーディネートが見つかりません。');
-            }
-
-            $imagePath = $coordinate->getImagePath();
-            if ($request->hasFile('image')) {
-                // 古い画像を削除
-                if ($imagePath) {
-                    Storage::disk('public')->delete($imagePath);
-                }
-                $imagePath = $request->file('image')->store('coordinates', 'public');
-            }
-
-            $this->coordinateService->updateCoordinate(
-                $id,
-                $validated['name'],
-                $validated['description'],
-                $imagePath,
-                $validated['clothes_ids']
-            );
+            $this->coordinateService->updateCoordinate($id, $validated, $request->file('image'));
 
             return redirect()->route('coordinates.index')
                 ->with('success', 'コーディネートを更新しました。');
@@ -217,16 +116,10 @@ class CoordinateController extends Controller
     /**
      * コーディネートを削除
      */
-    public function destroy($id)
+    public function destroy(int $id)
     {
         try {
-            $result = $this->coordinateService->deleteCoordinate($id);
-
-            if (!$result) {
-                return redirect()->back()
-                    ->with('error', 'コーディネートの削除に失敗しました。');
-            }
-
+            $this->coordinateService->deleteCoordinate($id);
             return redirect()->route('coordinates.index')
                 ->with('success', 'コーディネートを削除しました。');
         } catch (\Exception $e) {
@@ -238,16 +131,10 @@ class CoordinateController extends Controller
     /**
      * コーディネートに洋服を追加
      */
-    public function addClothes($coordinateId, $clothesId)
+    public function addClothes(int $coordinateId, int $clothesId)
     {
         try {
-            $result = $this->coordinateService->addClothesToCoordinate($coordinateId, $clothesId);
-
-            if (!$result) {
-                return redirect()->back()
-                    ->with('error', '洋服の追加に失敗しました。');
-            }
-
+            $this->coordinateService->addClothesToCoordinate($coordinateId, $clothesId);
             return redirect()->route('coordinates.show', $coordinateId)
                 ->with('success', '洋服を追加しました。');
         } catch (\Exception $e) {
@@ -259,16 +146,10 @@ class CoordinateController extends Controller
     /**
      * コーディネートから洋服を削除
      */
-    public function removeClothes($coordinateId, $clothesId)
+    public function removeClothes(int $coordinateId, int $clothesId)
     {
         try {
-            $result = $this->coordinateService->removeClothesFromCoordinate($coordinateId, $clothesId);
-
-            if (!$result) {
-                return redirect()->back()
-                    ->with('error', '洋服の削除に失敗しました。');
-            }
-
+            $this->coordinateService->removeClothesFromCoordinate($coordinateId, $clothesId);
             return redirect()->route('coordinates.show', $coordinateId)
                 ->with('success', '洋服を削除しました。');
         } catch (\Exception $e) {

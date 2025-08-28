@@ -2,40 +2,40 @@
 
 namespace App\Domain\Repositories;
 
-use App\Domain\Entities\Clothes;
-
 interface ClothesRepositoryInterface
 {
     /**
-     * 洋服をIDで検索
+     * IDで洋服を検索
      */
-    public function findById(int $id): ?Clothes;
+    public function findById(int $id): ?array;
 
     /**
-     * 特定のユーザーの全ての洋服を取得
-     * @return Clothes[]
+     * ユーザーIDで洋服を検索
      */
     public function findByUserId(int $userId): array;
 
     /**
-     * 特定のカテゴリーに属する洋服を取得
-     * @return Clothes[]
+     * カテゴリーIDで洋服を検索
      */
     public function findByCategoryId(int $categoryId): array;
 
     /**
-     * 特定のカテゴリーとその子カテゴリーに属する全ての洋服を取得
-     * @return Clothes[]
+     * カテゴリーとその子カテゴリーで洋服を検索
      */
     public function findByCategoryAndChildren(int $categoryId): array;
 
     /**
-     * 洋服を保存（新規作成または更新）
+     * コーディネートIDで洋服を検索
      */
-    public function save(Clothes $clothes): void;
+    public function findByCoordinateId(int $coordinateId): array;
+
+    /**
+     * 洋服を保存
+     */
+    public function save(array $clothes): void;
 
     /**
      * 洋服を削除
      */
-    public function delete(Clothes $clothes): void;
+    public function delete(array $clothes): void;
 } 

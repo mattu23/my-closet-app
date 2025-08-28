@@ -2,36 +2,40 @@
 
 namespace App\Domain\Entities;
 
-use App\Domain\ValueObjects\Size;
-use App\Domain\ValueObjects\Color;
-use App\Domain\ValueObjects\Brand;
+use App\Domain\Entities\Interfaces\EntityInterface;
+use App\Domain\Entities\Interfaces\SoftDeletableInterface;
 
-class Clothes
+class Clothes implements EntityInterface, SoftDeletableInterface
 {
     private int $id;
     private string $name;
-    private string $description;
+    private ?string $description;
     private ?string $imagePath;
     private int $categoryId;
     private int $userId;
+    private ?string $createdAt;
+    private ?string $updatedAt;
     private ?string $deletedAt;
-    
-    // 値オブジェクト
-    private ?Size $size;
-    private ?Color $color;
-    private ?Brand $brand;
+    private ?string $size = null;
+    private ?string $colorName = null;
+    private ?string $colorCode = null;
+    private ?string $brandName = null;
+    private ?string $brandDescription = null;
+    private ?string $brandCountry = null;
 
     public function __construct(
         int $id,
         string $name,
-        string $description,
+        ?string $description,
         ?string $imagePath,
         int $categoryId,
         int $userId,
-        ?Size $size = null,
-        ?Color $color = null,
-        ?Brand $brand = null,
-        ?string $deletedAt = null
+        ?string $size = null,
+        ?string $colorName = null,
+        ?string $colorCode = null,
+        ?string $brandName = null,
+        ?string $brandDescription = null,
+        ?string $brandCountry = null
     ) {
         $this->id = $id;
         $this->name = $name;
@@ -40,9 +44,11 @@ class Clothes
         $this->categoryId = $categoryId;
         $this->userId = $userId;
         $this->size = $size;
-        $this->color = $color;
-        $this->brand = $brand;
-        $this->deletedAt = $deletedAt;
+        $this->colorName = $colorName;
+        $this->colorCode = $colorCode;
+        $this->brandName = $brandName;
+        $this->brandDescription = $brandDescription;
+        $this->brandCountry = $brandCountry;
     }
 
     public function getId(): int
@@ -55,7 +61,7 @@ class Clothes
         return $this->name;
     }
 
-    public function getDescription(): string
+    public function getDescription(): ?string
     {
         return $this->description;
     }
@@ -75,24 +81,44 @@ class Clothes
         return $this->userId;
     }
 
-    public function getSize(): ?Size
+    public function getSize(): ?string
     {
         return $this->size;
     }
 
-    public function getColor(): ?Color
+    public function getColorName(): ?string
     {
-        return $this->color;
+        return $this->colorName;
     }
 
-    public function getBrand(): ?Brand
+    public function getColorCode(): ?string
     {
-        return $this->brand;
+        return $this->colorCode;
     }
 
-    public function getDeletedAt(): ?string
+    public function getBrandName(): ?string
     {
-        return $this->deletedAt;
+        return $this->brandName;
+    }
+
+    public function getBrandDescription(): ?string
+    {
+        return $this->brandDescription;
+    }
+
+    public function getBrandCountry(): ?string
+    {
+        return $this->brandCountry;
+    }
+
+    public function getCreatedAt(): ?string
+    {
+        return $this->createdAt;
+    }
+
+    public function getUpdatedAt(): ?string
+    {
+        return $this->updatedAt;
     }
 
     public function isDeleted(): bool
@@ -100,12 +126,27 @@ class Clothes
         return $this->deletedAt !== null;
     }
 
+    public function delete(): void
+    {
+        $this->deletedAt = date('Y-m-d H:i:s');
+    }
+
+    public function restore(): void
+    {
+        $this->deletedAt = null;
+    }
+
+    public function getDeletedAt(): ?string
+    {
+        return $this->deletedAt;
+    }
+
     public function changeName(string $name): void
     {
         $this->name = $name;
     }
 
-    public function changeDescription(string $description): void
+    public function changeDescription(?string $description): void
     {
         $this->description = $description;
     }
@@ -120,66 +161,24 @@ class Clothes
         $this->categoryId = $categoryId;
     }
 
-    public function changeSize(?Size $size): void
+    public function toArray(): array
     {
-        $this->size = $size;
-    }
-
-    public function changeColor(?Color $color): void
-    {
-        $this->color = $color;
-    }
-
-    public function changeBrand(?Brand $brand): void
-    {
-        $this->brand = $brand;
-    }
-
-    public function delete(): void
-    {
-        $this->deletedAt = date('Y-m-d H:i:s');
-    }
-
-    public function restore(): void
-    {
-        $this->deletedAt = null;
-    }
-    
-    // サイズが指定されているかどうか
-    public function hasSize(): bool
-    {
-        return $this->size !== null;
-    }
-    
-    // 色が指定されているかどうか
-    public function hasColor(): bool
-    {
-        return $this->color !== null;
-    }
-    
-    // ブランドが指定されているかどうか
-    public function hasBrand(): bool
-    {
-        return $this->brand !== null;
-    }
-    
-    // 洋服の詳細情報を取得
-    public function getFullInfo(): string
-    {
-        $info = $this->name;
-        
-        if ($this->hasBrand()) {
-            $info .= " by " . $this->brand->getName();
-        }
-        
-        if ($this->hasSize()) {
-            $info .= ", サイズ: " . $this->size->getValue();
-        }
-        
-        if ($this->hasColor()) {
-            $info .= ", 色: " . $this->color->getName();
-        }
-        
-        return $info;
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+            'description' => $this->description,
+            'image_path' => $this->imagePath,
+            'category_id' => $this->categoryId,
+            'user_id' => $this->userId,
+            'size' => $this->size,
+            'color_name' => $this->colorName,
+            'color_code' => $this->colorCode,
+            'brand_name' => $this->brandName,
+            'brand_description' => $this->brandDescription,
+            'brand_country' => $this->brandCountry,
+            'created_at' => $this->createdAt,
+            'updated_at' => $this->updatedAt,
+            'deleted_at' => $this->deletedAt,
+        ];
     }
 } 

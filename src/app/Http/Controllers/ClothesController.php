@@ -4,10 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Application\Services\ClothesService;
 use App\Application\Services\CategoryService;
-use App\Domain\ValueObjects\Size;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\View\View;
 use Illuminate\Validation\ValidationException;
 
 class ClothesController extends Controller
@@ -24,56 +22,26 @@ class ClothesController extends Controller
     /**
      * 洋服一覧を表示
      */
-    public function index(Request $request)
+    public function index(Request $request): View
     {
-        $userId = Auth::id();
-        $clothes = $this->clothesService->getClothesByUserId($userId);
-        
-        // フィルタリング
-        $size = $request->query('size');
-        $brand = $request->query('brand');
-        $color = $request->query('color');
-        
-        if ($size) {
-            try {
-                $clothes = $this->clothesService->getClothesBySize($userId, $size);
-            } catch (\InvalidArgumentException $e) {
-                // 無効なサイズの場合は無視
-            }
-        }
-        
-        if ($brand) {
-            $clothes = $this->clothesService->getClothesByBrand($userId, $brand);
-        }
-        
-        if ($color === 'dark') {
-            $clothes = $this->clothesService->getDarkColoredClothes($userId);
-        } elseif ($color === 'bright') {
-            $clothes = $this->clothesService->getBrightColoredClothes($userId);
-        }
-        
-        // 利用可能なサイズのリスト
-        $availableSizes = Size::getAvailableSizes();
-        
-        return view('clothes.index', [
-            'clothes' => $clothes,
-            'availableSizes' => $availableSizes
+        $validated = $request->validate([
+            'size' => 'nullable|string|max:10',
+            'brand' => 'nullable|string|max:100',
+            'color' => 'nullable|string|in:dark,bright'
         ]);
+
+        $clothesData = $this->clothesService->getFilteredClothes($validated);
+        
+        return view('clothes.index', $clothesData);
     }
 
     /**
      * 洋服作成フォームを表示
      */
-    public function create()
+    public function create(): View
     {
-        $userId = Auth::id();
-        $categories = $this->categoryService->getRootCategories();
-        $availableSizes = Size::getAvailableSizes();
-        
-        return view('clothes.create', [
-            'categories' => $categories,
-            'availableSizes' => $availableSizes
-        ]);
+        $formData = $this->clothesService->getCreateFormData();
+        return view('clothes.create', $formData);
     }
 
     /**
@@ -95,41 +63,7 @@ class ClothesController extends Controller
                 'image' => 'nullable|image|max:2048'
             ]);
 
-            $imagePath = null;
-            if ($request->hasFile('image')) {
-                $imagePath = $request->file('image')->store('clothes', 'public');
-            }
-
-            // 色情報の準備
-            $colorData = null;
-            if ($validated['color_name'] && $validated['color_code']) {
-                $colorData = [
-                    'name' => $validated['color_name'],
-                    'hex_code' => $validated['color_code']
-                ];
-            }
-            
-            // ブランド情報の準備
-            $brandData = null;
-            if ($validated['brand_name']) {
-                $brandData = [
-                    'name' => $validated['brand_name'],
-                    'description' => $validated['brand_description'],
-                    'country' => $validated['brand_country']
-                ];
-            }
-
-            $userId = Auth::id();
-            $this->clothesService->createClothes(
-                $validated['name'],
-                $validated['description'],
-                $imagePath,
-                $validated['category_id'],
-                $userId,
-                $validated['size'],
-                $colorData,
-                $brandData
-            );
+            $this->clothesService->createClothes($validated, $request->file('image'));
 
             return redirect()->route('clothes.index')
                 ->with('success', '洋服を登録しました。');
@@ -139,7 +73,7 @@ class ClothesController extends Controller
                 ->withInput();
         } catch (\Exception $e) {
             return redirect()->back()
-                ->with('error', '洋服の登録に失敗しました。' . $e->getMessage())
+                ->with('error', '洋服の登録に失敗しました。')
                 ->withInput();
         }
     }
@@ -147,65 +81,25 @@ class ClothesController extends Controller
     /**
      * 洋服詳細を表示
      */
-    public function show($id)
+    public function show(int $id): View
     {
-        $userId = Auth::id();
-        $clothes = $this->clothesService->getClothesByUserId($userId);
-        
-        // 表示対象の洋服を取得
-        $targetClothes = null;
-        foreach ($clothes as $item) {
-            if ($item->getId() == $id) {
-                $targetClothes = $item;
-                break;
-            }
-        }
-
-        if (!$targetClothes) {
-            return redirect()->route('clothes.index')
-                ->with('error', '洋服が見つかりません。');
-        }
-
-        return view('clothes.show', [
-            'clothes' => $targetClothes
-        ]);
+        $clothesData = $this->clothesService->getClothesDetail($id);
+        return view('clothes.show', $clothesData);
     }
 
     /**
      * 洋服編集フォームを表示
      */
-    public function edit($id)
+    public function edit(int $id): View
     {
-        $userId = Auth::id();
-        $clothes = $this->clothesService->getClothesByUserId($userId);
-        $categories = $this->categoryService->getRootCategories();
-        $availableSizes = Size::getAvailableSizes();
-        
-        // 編集対象の洋服を取得
-        $targetClothes = null;
-        foreach ($clothes as $item) {
-            if ($item->getId() == $id) {
-                $targetClothes = $item;
-                break;
-            }
-        }
-
-        if (!$targetClothes) {
-            return redirect()->route('clothes.index')
-                ->with('error', '洋服が見つかりません。');
-        }
-
-        return view('clothes.edit', [
-            'clothes' => $targetClothes,
-            'categories' => $categories,
-            'availableSizes' => $availableSizes
-        ]);
+        $editData = $this->clothesService->getEditFormData($id);
+        return view('clothes.edit', $editData);
     }
 
     /**
      * 洋服を更新
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, int $id)
     {
         try {
             $validated = $request->validate([
@@ -221,61 +115,7 @@ class ClothesController extends Controller
                 'image' => 'nullable|image|max:2048'
             ]);
 
-            // 現在の洋服情報を取得
-            $userId = Auth::id();
-            $clothes = $this->clothesService->getClothesByUserId($userId);
-            
-            $targetClothes = null;
-            foreach ($clothes as $item) {
-                if ($item->getId() == $id) {
-                    $targetClothes = $item;
-                    break;
-                }
-            }
-
-            if (!$targetClothes) {
-                return redirect()->route('clothes.index')
-                    ->with('error', '洋服が見つかりません。');
-            }
-
-            $imagePath = $targetClothes->getImagePath();
-            if ($request->hasFile('image')) {
-                // 古い画像を削除
-                if ($imagePath) {
-                    Storage::disk('public')->delete($imagePath);
-                }
-                $imagePath = $request->file('image')->store('clothes', 'public');
-            }
-
-            // 色情報の準備
-            $colorData = null;
-            if ($validated['color_name'] && $validated['color_code']) {
-                $colorData = [
-                    'name' => $validated['color_name'],
-                    'hex_code' => $validated['color_code']
-                ];
-            }
-            
-            // ブランド情報の準備
-            $brandData = null;
-            if ($validated['brand_name']) {
-                $brandData = [
-                    'name' => $validated['brand_name'],
-                    'description' => $validated['brand_description'],
-                    'country' => $validated['brand_country']
-                ];
-            }
-
-            $this->clothesService->updateClothes(
-                $id,
-                $validated['name'],
-                $validated['description'],
-                $imagePath,
-                $validated['category_id'],
-                $validated['size'],
-                $colorData,
-                $brandData
-            );
+            $this->clothesService->updateClothes($id, $validated, $request->file('image'));
 
             return redirect()->route('clothes.index')
                 ->with('success', '洋服を更新しました。');
@@ -285,7 +125,7 @@ class ClothesController extends Controller
                 ->withInput();
         } catch (\Exception $e) {
             return redirect()->back()
-                ->with('error', '洋服の更新に失敗しました。' . $e->getMessage())
+                ->with('error', '洋服の更新に失敗しました。')
                 ->withInput();
         }
     }
@@ -293,16 +133,10 @@ class ClothesController extends Controller
     /**
      * 洋服を削除
      */
-    public function destroy($id)
+    public function destroy(int $id)
     {
         try {
-            $result = $this->clothesService->deleteClothes($id);
-
-            if (!$result) {
-                return redirect()->back()
-                    ->with('error', '洋服の削除に失敗しました。');
-            }
-
+            $this->clothesService->deleteClothes($id);
             return redirect()->route('clothes.index')
                 ->with('success', '洋服を削除しました。');
         } catch (\Exception $e) {
